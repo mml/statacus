@@ -127,7 +127,6 @@ infoline() {
 }
 
 indent=0
-delta=0
 start() {
   local name="$1"
   shift
