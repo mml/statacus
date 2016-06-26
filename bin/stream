@@ -2,18 +2,14 @@
 
 zmodload zsh/terminfo
 
-NAME=1
-LEVEL=2
-
-typeset -a stack
-typeset -a strings
-typeset -a top
-typeset -a funs
+typeset -a name_stack
+typeset -a level_stack
+typeset -a string_stack
 
 main() {
   stInit
-  funs+='suite'
   cat demo-text.txt | parse
+  echo
 }
 
 have=n
@@ -71,7 +67,7 @@ it() {
   while info || each || step || startit; do
     :
   done
-  passfail || exit 2
+  pass || fail || exit 2
   stop IT $name
 }
 
@@ -81,9 +77,21 @@ startit() {
   update IT 'RUNNING'
 }
 
-passfail() {
-  getline '^PASS|FAIL' || return 1
+pass=0
+fail=0
+
+pass() {
+  getline '^PASS' || return 1
+  (( pass++ ))
   update IT $line
+  update SUITE "$pass passed $fail failed"
+}
+
+fail() {
+  getline '^FAIL' || return 1
+  (( fail++ ))
+  update IT $line
+  update SUITE "$pass passed $fail failed"
 }
 
 each() {
@@ -126,8 +134,7 @@ start() {
   local name="$1"
   shift
   if [[ -n "$*" ]] {
-    stPush "$name" $(( indent++ ))
-    stReplace "$*"
+    stPush "$name" $(( indent++ )) "$*"
   }
   # shift
   # printf '%*s [%s "%s"\n' $indent '' "$name" "$*"
@@ -160,30 +167,28 @@ stop() {
 }
 
 stInit() {
-  stack=()
-  st_push START 0
+  name_stack=()
+  level_stack=()
+  string_stack=()
 }
 
 # replace current line
 stReplace() {
   printf '\r'
-  echoti hpa $top[$LEVEL]
+  echoti hpa $level_stack[-1]
   echoti el
   printf "$@"
 }
 
 stPush() {
-  local name="$1"
-  local depth="$2"
-
-  st_push ${name} $depth
-  printf '\n%*s' $top[$LEVEL] ''
+  st_push "$@"
+  printf '\n%*s%s' $level_stack[-1] '' $string_stack[-1]
 }
 
 stPopTo() {
   local name="$1"
 
-  until [[ "$top[$NAME]" == "$name" ]] {
+  until [[ "$name_stack[-1]" == "$name" ]] {
     stPop
     sleep .1
   }
@@ -192,7 +197,7 @@ stPopTo() {
 stPopAll() {
   local name="$1"
 
-  until [[ "$top[$NAME]" != "$name" ]] {
+  until [[ "$name_stack[-1]" != "$name" ]] {
     stPop
     sleep .1
   }
@@ -202,8 +207,9 @@ stPop() {
   printf '\r'
   echoti el
   echoti cuu1
-  shift -p stack
-  st_top
+  shift -p name_stack
+  shift -p level_stack
+  shift -p string_stack
 }
 
 stUpdate() {
@@ -211,12 +217,13 @@ stUpdate() {
   local name="$1"
   shift
   echoti sc
-  for (( i = 0; i < $#stack; i++ )) {
-    ent=(${(s: :)stack[$(( $#stack - i ))]})
-    if [[ "$ent[$NAME]" == "$name" ]] {
+  for (( i = 0; i < $#name_stack; i++ )) {
+    j=$(( $#name_stack - i ))
+    if [[ "$name_stack[$j]" == "$name" ]] {
       printf '\r'
-      echoti hpa $ent[$LEVEL]
+      echoti hpa "$level_stack[$j]"
       echoti el
+      printf "%s -- " $string_stack[$j]
       printf "$@"
       break
     }
@@ -226,13 +233,9 @@ stUpdate() {
 }
 
 st_push() {
-  stack+="$1 $2"
-  st_top
+  name_stack+=($1)
+  level_stack+=($2)
+  string_stack+=($3)
 }
-
-st_top() {
-  top=(${(s: :)stack[-1]})
-}
-
 
 main "$@"
