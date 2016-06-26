@@ -1,0 +1,238 @@
+#!/bin/zsh -f
+
+zmodload zsh/terminfo
+
+NAME=1
+LEVEL=2
+
+typeset -a stack
+typeset -a strings
+typeset -a top
+typeset -a funs
+
+main() {
+  stInit
+  funs+='suite'
+  cat demo-text.txt | parse
+}
+
+have=n
+
+getline() {
+  local pat="$1"
+  if [[ "$have" != y ]] {
+    read line || return 1
+    sleep .2
+    have=y
+  }
+  if [[ "$line" =~ "$pat" ]] {
+    have=n
+    return 0
+  }
+  return 1
+}
+
+unclaim() {
+  have=y
+}
+
+parse() {
+  suite
+
+  if [[ "$have" == y ]] {
+    echo "unclaimed line: $line"
+  }
+}
+
+suite() {
+  getline '^Will run' || return 1
+  local name="$line"
+  start SUITE $name
+  while context; do
+    :
+  done
+  stop SUITE $name
+}
+
+context() {
+  getline '\[k8s\.io\]' || return 1
+  local name="$line"
+  start CONTEXT $name
+  while it || context || info; do
+    :
+  done
+  stop CONTEXT $name
+}
+
+it() {
+  getline '^\[It\]' || return 1
+  local name="$line"
+  start IT $name
+  while info || each || step || startit; do
+    :
+  done
+  passfail || exit 2
+  stop IT $name
+}
+
+startit() {
+  getline '\[It\]$' || return 1
+  local name="$line"
+  update IT 'RUNNING'
+}
+
+passfail() {
+  getline '^PASS|FAIL' || return 1
+  update IT $line
+}
+
+each() {
+  getline '(After|Before)Each' || return 1
+  local name="$line"
+  start EACH $name
+  while info || step; do
+    :
+  done
+  stop EACH $name
+}
+
+step() {
+  getline '^STEP:' || return 1
+  local name="$line"
+  start STEP $name
+  info
+  stop STEP $name
+}
+
+info() {
+  getline '^INFO' || return 1
+  unclaim
+  start INFO
+  while infoline; do
+    :
+  done
+  stop INFO
+}
+
+infoline() {
+  getline '^INFO' || return 1
+  start INFOLINE "$line"
+  stop INFOLINE "$line"
+}
+
+indent=0
+delta=0
+start() {
+  local name="$1"
+  shift
+  if [[ -n "$*" ]] {
+    stPush "$name" $(( indent++ ))
+    stReplace "$*"
+  }
+  # shift
+  # printf '%*s [%s "%s"\n' $indent '' "$name" "$*"
+  # (( indent++ ))
+}
+
+update() {
+  local name="$1"
+  shift
+  stUpdate "$name" "$@"
+  # printf '%*s <==%s ->"%s"\n' $indent '' "$name" "$*"
+}
+
+stop() {
+  local name="$1"
+  shift
+  if [[ -n "$*" ]] {
+    (( indent-- ))
+  }
+  if [[ "$name" == 'INFO' ]] {
+    stPopAll 'INFOLINE'
+  } elif [[ "$name" == 'EACH' ]] {
+    stPopTo 'EACH'
+    stPop
+  } elif [[ "$name" == 'IT' ]] {
+    stPopTo 'IT'
+  }
+  # (( indent-- ))
+  # printf '%*s %s] "%s"\n' $indent '' "$name" "$*"
+}
+
+stInit() {
+  stack=()
+  st_push START 0
+}
+
+# replace current line
+stReplace() {
+  printf '\r'
+  echoti hpa $top[$LEVEL]
+  echoti el
+  printf "$@"
+}
+
+stPush() {
+  local name="$1"
+  local depth="$2"
+
+  st_push ${name} $depth
+  printf '\n%*s' $top[$LEVEL] ''
+}
+
+stPopTo() {
+  local name="$1"
+
+  until [[ "$top[$NAME]" == "$name" ]] {
+    stPop
+    sleep .1
+  }
+}
+
+stPopAll() {
+  local name="$1"
+
+  until [[ "$top[$NAME]" != "$name" ]] {
+    stPop
+    sleep .1
+  }
+}
+
+stPop() {
+  printf '\r'
+  echoti el
+  echoti cuu1
+  shift -p stack
+  st_top
+}
+
+stUpdate() {
+  typeset -a ent
+  local name="$1"
+  shift
+  echoti sc
+  for (( i = 0; i < $#stack; i++ )) {
+    ent=(${(s: :)stack[$(( $#stack - i ))]})
+    if [[ "$ent[$NAME]" == "$name" ]] {
+      printf '\r'
+      echoti hpa $ent[$LEVEL]
+      echoti el
+      printf "$@"
+      break
+    }
+    echoti cuu1
+  }
+  echoti rc
+}
+
+st_push() {
+  stack+="$1 $2"
+  st_top
+}
+
+st_top() {
+  top=(${(s: :)stack[-1]})
+}
+
+
+main "$@"

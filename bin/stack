@@ -1,0 +1,109 @@
+#!/bin/zsh -f
+
+zmodload zsh/terminfo
+
+NAME=1
+LEVEL=2
+
+typeset -a stack
+typeset -a top
+
+main() {
+  stInit
+  cat demo-text.txt | while read line; do
+    if [[ $line =~ '^\[k8s.io\]' ]] {
+      stPush context 1
+    } elif [[ $line =~ '^\[It\]' ]] {
+      stPush it 1
+    } elif [[ $line =~ '\[It\]$' ]] {
+      stPopTo it
+      stReplace "[It] -- Running"
+      continue
+    } elif [[ $line =~ 'PASS' ]] {
+      stPopTo it
+      stReplace "[It] -- PASS"
+      continue
+    } elif [[ $line =~ 'BeforeEach|AfterEach' ]] {
+      stPopTo it
+      stPush each 1
+    } elif [[ $line =~ 'STEP:' ]] {
+      echo $stack >& 2
+      stPopAll info
+      echo $stack >& 2
+      stCPush step
+    } else {
+      stCPush info
+    }
+    stReplace "$line"
+    sleep .8
+  done
+}
+
+stInit() {
+  stack=()
+  st_push START 0
+}
+
+# replace current line
+stReplace() {
+  printf '\r'
+  echoti hpa $top[$LEVEL]
+  echoti el
+  printf "$@"
+}
+
+stCPush() {
+  local name="$1"
+
+  if [[ $top[$NAME] == "$name" ]] {
+    stPush "$name" 0
+  } else {
+    stPush "$name" 1
+  }
+}
+
+# push and increment
+stPush() {
+  local name="$1"
+  local incr="$2"
+
+  st_push ${name} $(( top[$LEVEL] + incr ))
+  printf '\n%*s' $top[$LEVEL] ''
+}
+
+stPopTo() {
+  local name="$1"
+
+  until [[ "$top[$NAME]" == "$name" ]] {
+    stPop
+  }
+}
+
+stPopAll() {
+  local name="$1"
+
+  until [[ "$top[$NAME]" != "$name" ]] {
+    echo "$top[$NAME] != $name" >& 2
+    stPop
+  }
+}
+
+stPop() {
+  echoti hpa $top[$LEVEL]
+  echoti el
+  echoti cuu1
+  shift -p stack
+  st_top
+}
+
+st_push() {
+  stack+="$1 $2"
+  st_top
+}
+
+st_top() {
+  top=(${(s: :)stack[-1]})
+}
+
+
+main "$@"

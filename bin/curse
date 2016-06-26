@@ -1,0 +1,29 @@
+#!/bin/zsh -f
+
+zmodload zsh/curses
+
+newline() {
+  w="$1"
+  typeset -a pos
+
+  zcurses position "$w" pos
+  zcurses string "$w" "$(printf '%*s' $(( 80 - pos[2] )) ' ')"
+}
+
+zcurses init
+
+zcurses addwin foo 5 80 1 1
+zcurses scroll foo on
+cat /etc/passwd | while read line; do
+  zcurses string foo "$line"
+  newline foo
+  zcurses refresh foo
+  sleep 1
+done
+sleep 5
+
+zcurses delwin foo
+zcurses refresh
+
+sleep 5
+zcurses end

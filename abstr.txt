@@ -1,0 +1,73 @@
+- stack of lines is simple to think about, but writing code that says "if i'm
+  not in a blah, start a blah at L+1, otherwise at L", and "back up to the last
+  thing that's not a foo" or "...is a bar" is a nightmare
+- you kind of want a grammar...
+  - context -> {info | context | it}*
+  - it -> {info | each | step}* ; passfail
+  - each -> {info | step}*
+  - step -> info
+  - info -> infoline+
+- then in each context, you just need a way to say that the current line either
+  continues the current context or doesn't... when it doesn't, we mark the end
+  of that context
+- then deciding what to do with each line of context and when a context ends is
+  separate from the parsing
+- then we'd be calling stuff like the below
+- each object in the "parse tree" has a type, an optional name (line), and 0 or more children
+- in general, if there is a line, you increase the indent and print it
+- then you decide what to do at the end of a type
+  - end INFO - remove
+  - end STEP - remove children (same as above rule)
+  - end EACH - remove
+  - end IT - remove children
+  - end CONTEXT - remove
+- this wouldn't be a tree parser... it would produce a stream
+- there are some special objects, like passfail above, that would drive an
+  update to an ancestor node rather than creating anything at all.  somethng like
+  - update IT 'PASS'
+- that would imply finding the closest ancestor IT node and updating a status
+  string to 'PASS'... the clever library would find that line and then render it as
+  "[It] should do a thing -- PASS"
+
+start RUN                           Will run 1 of 333
+start CONTEXT '[k...DNS'            [k8s.io] DNS
+start CONTEXT '...rated'            [k8s.io] DNS Federated
+start IT 'should do'                [It] should do a thing
+start BEFOREEACH                    BeforeEach
+start STEP 'Foo'                    STEP: Foo
+end STEP; start STEP 'Bar'          STEP: Bar
+start INFO; start/end INFOLINE      INFO blah
+start/end INFOLINE                  INFO blah blah
+start/end INFOLINE                  INFO blah blah blah
+start/end INFOLINE                  INFO blah whatever
+start/end INFOLINE                  INFO blah fucking blah
+end INFO                            should do a thing [It]
+start STEP '...blah'                STEP: Creating a blah
+end STEP; start STEP'Waiting'       STEP: Waiting for the blah
+start/end INFOLINE                  INFO Looking for the blah (1 / 30)
+start/end INFOLINE                  INFO Looking for the blah (2 / 30)
+start/end INFOLINE                  INFO Looking for the blah (3 / 30)
+start/end INFOLINE                  INFO Looking for the blah (4 / 30)
+start/end INFOLINE                  INFO Looking for the blah (5 / 30)
+start/end INFOLINE                  INFO Looking for the blah (6 / 30)
+start/end INFOLINE                  INFO Looking for the blah (7 / 30)
+start/end INFOLINE                  INFO Looking for the blah (8 / 30)
+start/end INFOLINE                  INFO Looking for the blah (9 / 30)
+                                    INFO Looking for the blah (10 / 30)
+                                    INFO Looking for the blah (11 / 30)
+                                    INFO Looking for the blah (12 / 30)
+                                    INFO Looking for the blah (13 / 30)
+                                    INFO Looking for the blah (14 / 30)
+                                    INFO Looking for the blah (15 / 30)
+                                    INFO Looking for the blah (16 / 30)
+                                    INFO Looking for the blah (17 / 30)
+                                    STEP: Running a blerg
+                                    AfterEach
+                                    STEP: Deleting the blerg
+                                    INFO Waiting for the blerg to be gone (1 / 30)
+                                    INFO Waiting for the blerg to be gone (2 / 30)
+                                    INFO Waiting for the blerg to be gone (3 / 30)
+                                    INFO Waiting for the blerg to be gone (4 / 30)
+                                    INFO Waiting for the blerg to be gone (5 / 30)
+                                    STEP: Deleting the namespace
+                                    PASS

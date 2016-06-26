@@ -1,0 +1,91 @@
+Will run 2 of 333
+[k8s.io] DNS
+[k8s.io] DNS Federated
+[It] should do a thing
+BeforeEach
+STEP: Foo
+STEP: Baz
+INFO blah
+INFO blah blah
+INFO blah blah blah
+INFO blah whatever
+STEP: Bar
+INFO blah
+INFO blah blah
+INFO blah blah blah
+INFO blah whatever
+INFO blah fucking blah
+should do a thing [It]
+STEP: Creating a blah
+STEP: Waiting for the blah
+INFO Looking for the blah (1 / 30)
+INFO Looking for the blah (2 / 30)
+INFO Looking for the blah (3 / 30)
+INFO Looking for the blah (4 / 30)
+INFO Looking for the blah (5 / 30)
+INFO Looking for the blah (6 / 30)
+INFO Looking for the blah (7 / 30)
+INFO Looking for the blah (8 / 30)
+INFO Looking for the blah (9 / 30)
+INFO Looking for the blah (10 / 30)
+INFO Looking for the blah (11 / 30)
+INFO Looking for the blah (12 / 30)
+INFO Looking for the blah (13 / 30)
+INFO Looking for the blah (14 / 30)
+INFO Looking for the blah (15 / 30)
+INFO Looking for the blah (16 / 30)
+INFO Looking for the blah (17 / 30)
+STEP: Running a blerg
+AfterEach
+STEP: Deleting the blerg
+INFO Waiting for the blerg to be gone (1 / 30)
+INFO Waiting for the blerg to be gone (2 / 30)
+INFO Waiting for the blerg to be gone (3 / 30)
+INFO Waiting for the blerg to be gone (4 / 30)
+INFO Waiting for the blerg to be gone (5 / 30)
+STEP: Deleting the namespace
+PASS
+[It] should do another thing
+BeforeEach
+STEP: Foo
+STEP: Baz
+INFO blah
+INFO blah blah
+INFO blah blah blah
+INFO blah whatever
+STEP: Bar
+INFO blah
+INFO blah blah
+INFO blah blah blah
+INFO blah whatever
+INFO blah fucking blah
+should do another thing [It]
+STEP: Creating a blah
+STEP: Waiting for the blah
+INFO Looking for the blah (1 / 30)
+INFO Looking for the blah (2 / 30)
+INFO Looking for the blah (3 / 30)
+INFO Looking for the blah (4 / 30)
+INFO Looking for the blah (5 / 30)
+INFO Looking for the blah (6 / 30)
+INFO Looking for the blah (7 / 30)
+INFO Looking for the blah (8 / 30)
+INFO Looking for the blah (9 / 30)
+INFO Looking for the blah (10 / 30)
+INFO Looking for the blah (11 / 30)
+INFO Looking for the blah (12 / 30)
+INFO Looking for the blah (13 / 30)
+INFO Looking for the blah (14 / 30)
+INFO Looking for the blah (15 / 30)
+INFO Looking for the blah (16 / 30)
+INFO Looking for the blah (17 / 30)
+STEP: Running a blerg
+AfterEach
+STEP: Deleting the blerg
+INFO Waiting for the blerg to be gone (1 / 30)
+INFO Waiting for the blerg to be gone (2 / 30)
+INFO Waiting for the blerg to be gone (3 / 30)
+INFO Waiting for the blerg to be gone (4 / 30)
+INFO Waiting for the blerg to be gone (5 / 30)
+STEP: Deleting the namespace
+FAIL
