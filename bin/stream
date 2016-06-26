@@ -134,16 +134,12 @@ start() {
   if [[ -n "$*" ]] {
     stPush "$name" $(( indent++ )) "$*"
   }
-  # shift
-  # printf '%*s [%s "%s"\n' $indent '' "$name" "$*"
-  # (( indent++ ))
 }
 
 update() {
   local name="$1"
   shift
   stUpdate "$name" "$@"
-  # printf '%*s <==%s ->"%s"\n' $indent '' "$name" "$*"
 }
 
 stop() {
@@ -160,8 +156,6 @@ stop() {
   } elif [[ "$name" == 'IT' ]] {
     stPopTo 'IT'
   }
-  # (( indent-- ))
-  # printf '%*s %s] "%s"\n' $indent '' "$name" "$*"
 }
 
 
