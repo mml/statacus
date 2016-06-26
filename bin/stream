@@ -10,6 +10,8 @@ main() {
   echo
 }
 
+typeset -a cpath
+
 have=n
 
 getline() {
@@ -50,11 +52,18 @@ suite() {
 
 context() {
   getline '\[k8s\.io\]' || return 1
+  local rest="$(echo $line | perl -ne 'print $1 if m{\Q[k8s.io] '"$cpath"'\E ?(.*)}')"
+  if [[ -z "$rest" ]] {
+    unclaim
+    return 1
+  }
   local name="$line"
   start CONTEXT $name
+  cpath+="$rest"
   while it || context || info; do
     :
   done
+  shift -p cpath
   stop CONTEXT $name
 }
 
