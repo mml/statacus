@@ -6,7 +6,7 @@ zmodload zsh/terminfo
 
 main() {
   stInit
-  cat demo-text.txt | parse
+  parse
   echo
 }
 
